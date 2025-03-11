@@ -33,6 +33,48 @@ export default function AIChat({ ventureId, stage, onAnalysisGenerated }: AIChat
     refetchOnWindowFocus: false
   });
   
+  // Auto-generate message for empty stages
+  useEffect(() => {
+    // Check if messages is loaded and empty
+    if (!isLoading && messages && messages.length === 0) {
+      // Generate default messages based on stage
+      let defaultMessage = "";
+      
+      switch(stage) {
+        case "initialIdea":
+          defaultMessage = "I'm working on a startup idea that leverages AI to solve a real-world problem. Can you help me refine it and analyze the potential?";
+          break;
+        case "smartRefinement":
+          defaultMessage = "Please help me refine my idea using the SMART framework (Specific, Measurable, Achievable, Relevant, Time-bound). What specific aspects should I focus on?";
+          break;
+        case "opportunityAnalysis":
+          defaultMessage = "Can you help me analyze the market opportunity for this venture? I need insights on market size, growth potential, and competitive landscape.";
+          break;
+        case "ventureThesis":
+          defaultMessage = "I need to create a comprehensive venture thesis. Please help me define my vision, mission, target customers, and business model.";
+          break;
+        case "viabilityAssessment":
+          defaultMessage = "Can you assess the business viability of my venture? I need to understand market demand, financial projections, and risk factors.";
+          break;
+        case "gtmStrategy":
+          defaultMessage = "I need to develop a go-to-market strategy. Please help me define my target segments, marketing approach, pricing strategy, and launch plan.";
+          break;
+        default:
+          defaultMessage = "Can you help me with this stage of my venture development?";
+      }
+      
+      // Only send if we have a default message
+      if (defaultMessage) {
+        setMessage(defaultMessage);
+        // Auto-submit after a short delay
+        setTimeout(() => {
+          sendMessageMutation.mutate(defaultMessage);
+          setIsSubmitting(true);
+        }, 500);
+      }
+    }
+  }, [isLoading, messages, stage]);
+  
   // Send message mutation
   const sendMessageMutation = useMutation({
     mutationFn: async (content: string) => {
