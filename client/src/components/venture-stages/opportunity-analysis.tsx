@@ -96,7 +96,13 @@ export default function OpportunityAnalysis({ ventureId }: OpportunityAnalysisPr
         </CardHeader>
         <CardContent>
           <div className="h-60">
-            <MarketSizeChart tam={tam} sam={sam} som={som} />
+            {tam && sam && som ? (
+              <MarketSizeChart tam={tam} sam={sam} som={som} />
+            ) : (
+              <div className="flex items-center justify-center h-full">
+                <p className="text-gray-500">Market size data not available</p>
+              </div>
+            )}
           </div>
           <div className="mt-3 text-xs text-gray-600">
             <p>{description}</p>

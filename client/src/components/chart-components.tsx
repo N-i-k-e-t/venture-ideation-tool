@@ -67,6 +67,14 @@ export const MarketSizeChart = ({ tam, sam, som }: { tam?: string; sam?: string;
   const extractNumericValue = (str?: string): number => {
     if (!str) return 0;
     
+    // Check if str is a string before using string methods
+    if (typeof str !== 'string') {
+      // If it's a number, return it directly
+      if (typeof str === 'number') return str;
+      // Otherwise, safely convert to string
+      return 0;
+    }
+    
     const value = parseFloat(str.replace(/[^0-9.]/g, ''));
     
     // Handle suffixes like B, M, K
