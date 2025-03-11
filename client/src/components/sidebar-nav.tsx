@@ -43,7 +43,7 @@ function NavItem({ href, icon, text, active }: NavItemProps) {
 
 export default function SidebarNav() {
   const [location] = useLocation();
-  const isMobile = useMobile();
+  const isMobile = useIsMobile();
   const [open, setOpen] = useState(false);
 
   const navItems = [
