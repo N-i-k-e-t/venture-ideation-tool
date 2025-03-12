@@ -24,6 +24,12 @@ export const ventureIdeas = pgTable("venture_ideas", {
   title: text("title").notNull(),
   currentStage: integer("current_stage").notNull().default(1),
   isCompleted: boolean("is_completed").notNull().default(false),
+  // Sharing fields
+  shareToken: text("share_token").unique(),
+  isPublic: boolean("is_public").notNull().default(false),
+  cardStyle: text("card_style").default("default"),
+  cardTheme: text("card_theme").default("light"),
+  cardDescription: text("card_description"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });
@@ -33,6 +39,14 @@ export const insertVentureIdeaSchema = createInsertSchema(ventureIdeas).pick({
   title: true,
   currentStage: true,
   isCompleted: true,
+});
+
+// Schema for sharing updates
+export const shareVentureSchema = z.object({
+  isPublic: z.boolean().optional(),
+  cardStyle: z.enum(["default", "minimal", "gradient", "modern"]).optional(),
+  cardTheme: z.enum(["light", "dark", "blue", "purple", "green"]).optional(),
+  cardDescription: z.string().max(200).optional(),
 });
 
 export type InsertVentureIdea = z.infer<typeof insertVentureIdeaSchema>;

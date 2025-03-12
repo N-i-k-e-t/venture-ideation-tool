@@ -1,0 +1,11 @@
+services:
+  - type: web
+    name: venture-ideation-tool
+    env: node
+    buildCommand: npm install && npm run build
+    startCommand: npm start
+    envVars:
+      - key: OPENAI_API_KEY
+        sync: false # This makes it a secret that needs to be entered manually
+    autoDeploy: true
+    plan: free # Specifies the free tier
