@@ -16,13 +16,15 @@ import GtmStrategy from "@/components/venture-stages/gtm-strategy";
 import PitchReport from "@/components/venture-stages/pitch-report";
 import StageCard from "@/components/venture-stages/stage-card";
 import { Button } from "@/components/ui/button";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { ChevronLeft, ChevronRight, Sparkles, Loader2 } from "lucide-react";
 
 export default function IdeationProcess() {
   const [, params] = useRoute("/ideation/:ventureId");
   const ventureId = params?.ventureId ? parseInt(params.ventureId) : null;
   const { currentVenture, setCurrentVenture } = useVenture();
   const [activeStage, setActiveStage] = useState<Stage>("initialIdea");
+  const [autoCompleting, setAutoCompleting] = useState(false);
+  const [currentAutoStage, setCurrentAutoStage] = useState<Stage | null>(null);
   const queryClient = useQueryClient();
   
   // Fetch venture details if not in context
@@ -94,6 +96,126 @@ export default function IdeationProcess() {
     if (!stageContents) return false;
     const content = stageContents.find((content: any) => content.stage === stage);
     return content?.isCompleted || false;
+  };
+  
+  // Mark stage as completed
+  const markStageCompleted = useMutation({
+    mutationFn: async (stageData: { stage: Stage, content?: any }) => {
+      return apiRequest("POST", `/api/ventures/${ventureId}/stages/${stageData.stage}`, {
+        content: stageData.content || { autoCompleted: true },
+        isCompleted: true
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: [`/api/ventures/${ventureId}/stages`] });
+    }
+  });
+  
+  // Auto-generate content for a stage
+  const generateStageContent = useMutation({
+    mutationFn: async (stage: Stage) => {
+      return apiRequest("POST", `/api/ventures/${ventureId}/stages/${stage}/messages`, {
+        role: "user",
+        content: getDefaultPromptForStage(stage)
+      });
+    },
+    onSuccess: (data) => {
+      // Invalidate messages for this stage
+      queryClient.invalidateQueries({ 
+        queryKey: [`/api/ventures/${ventureId}/stages/${currentAutoStage}/messages`] 
+      });
+    }
+  });
+  
+  // Default prompts for each stage
+  const getDefaultPromptForStage = (stage: Stage): string => {
+    switch(stage) {
+      case "initialIdea":
+        return "I'm working on a startup idea that leverages AI to solve a real-world problem. Can you help me refine it and analyze the potential?";
+      case "smartRefinement":
+        return "Please help me refine my idea using the SMART framework (Specific, Measurable, Achievable, Relevant, Time-bound). What specific aspects should I focus on?";
+      case "opportunityAnalysis":
+        return "Can you help me analyze the market opportunity for this venture? I need insights on market size, growth potential, and competitive landscape.";
+      case "ventureThesis":
+        return "I need to create a comprehensive venture thesis. Please help me define my vision, mission, target customers, and business model.";
+      case "viabilityAssessment":
+        return "Can you assess the business viability of my venture? I need to understand market demand, financial projections, and risk factors.";
+      case "gtmStrategy":
+        return "I need to develop a go-to-market strategy. Please help me define my target segments, marketing approach, pricing strategy, and launch plan.";
+      case "pitchReport":
+        return "Can you help me generate a comprehensive pitch report and materials for my venture?";
+      default:
+        return "Can you help me with this stage of my venture development?";
+    }
+  };
+  
+  // Auto-complete all stages function
+  const autoCompleteAllStages = async () => {
+    if (!ventureId || autoCompleting) return;
+    
+    try {
+      setAutoCompleting(true);
+      toast({
+        title: "Auto-completing stages",
+        description: "Generating content for all stages. This may take a few minutes...",
+        duration: 5000,
+      });
+      
+      // Get all stages in order
+      const stageKeys = Object.keys(stageOrder) as Stage[];
+      
+      // Process each stage one by one
+      for (let i = 0; i < stageKeys.length; i++) {
+        const stage = stageKeys[i];
+        
+        // Skip stages that are already completed
+        if (isStageCompleted(stage)) {
+          continue;
+        }
+        
+        // Set current stage being processed
+        setCurrentAutoStage(stage);
+        
+        // Update venture progress to this stage
+        await updateVentureMutation.mutateAsync(stageOrder[stage]);
+        
+        // Generate content for this stage
+        await generateStageContent.mutateAsync(stage);
+        
+        // Wait for the AI to process (simulating conversation)
+        await new Promise(resolve => setTimeout(resolve, 2000));
+        
+        // Mark the stage as completed
+        await markStageCompleted.mutateAsync({ stage });
+        
+        // Update UI to show progress
+        toast({
+          title: `Completed: ${stage}`,
+          description: "Moving to next stage...",
+          duration: 2000,
+        });
+      }
+      
+      // Set to final stage
+      const finalStage = stageKeys[stageKeys.length - 1];
+      setActiveStage(finalStage);
+      
+      toast({
+        title: "Process complete!",
+        description: "All stages have been auto-completed successfully.",
+        duration: 5000,
+      });
+    } catch (error) {
+      toast({
+        title: "Error during auto-completion",
+        description: "There was an error processing some stages. Please try again.",
+        variant: "destructive",
+        duration: 5000,
+      });
+    } finally {
+      setAutoCompleting(false);
+      setCurrentAutoStage(null);
+    }
   };
   
   // Render active stage component
