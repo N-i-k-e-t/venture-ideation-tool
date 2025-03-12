@@ -267,6 +267,26 @@ export default function IdeationProcess() {
             
             {/* Progress Tracker */}
             <div className="mt-6 px-4 sm:px-6 lg:px-8">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-lg font-medium text-gray-900">Progress Tracker</h3>
+                <Button
+                  onClick={autoCompleteAllStages}
+                  disabled={autoCompleting || !ventureId}
+                  className="bg-gradient-to-r from-purple-500 to-indigo-600 hover:from-purple-600 hover:to-indigo-700"
+                >
+                  {autoCompleting ? (
+                    <>
+                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                      Processing {currentAutoStage}...
+                    </>
+                  ) : (
+                    <>
+                      <Sparkles className="h-4 w-4 mr-2" />
+                      Auto-Complete All Stages
+                    </>
+                  )}
+                </Button>
+              </div>
               <ProgressTracker 
                 activeStage={activeStage} 
                 completedStages={stageContents?.filter((content: any) => content.isCompleted)
@@ -287,6 +307,17 @@ export default function IdeationProcess() {
                   }
                 }}
               />
+              {autoCompleting && (
+                <div className="mt-2 text-center">
+                  <p className="text-sm text-gray-500">
+                    AI is automatically generating content for each stage.
+                    This process may take a few minutes to complete.
+                  </p>
+                  <div className="mt-3 w-full bg-gray-200 rounded-full h-2.5">
+                    <div className="bg-primary h-2.5 rounded-full animate-pulse" style={{ width: '100%' }}></div>
+                  </div>
+                </div>
+              )}
             </div>
             
             {/* Main Workflow Container */}
